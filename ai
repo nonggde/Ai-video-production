@@ -1,0 +1,912 @@
+TODO-list for kune -*- mode: org; -*-
+#+ARCHIVE: %s_done::
+
+#+SEQ_TODO: TODO danigb samer vjrj FEEDBACK VERIFY | FIXED CANCELED WONTFIX
+
+* Intro
+  In this file we normally write things TODO but also some notes, brainstorming, ideas, debug outputs, etc. Is fast a complement of our issues system: http://redmine.ourproject.org/projects/kune/issues
+   We use org-mode in emacs to easy manage this file
+
+** Symbols
+   <nick> or <n> == reported by / commented by
+   nick == assigned to
+
+* SHORT-TERM (URGENT)
+** Stats via munin
+GRANT SELECT ON kune_dev.* TO kune_stats@'localhost' IDENTIFIED BY 'db4kune';
+** Session expired
+12-04-09 00:14:29 GWTServiceFilter [INFO] --------------------------------------------------------------------------------
+2012-04-09 00:14:29 GWTServiceFilter [DEBUG] SERVICE: /ws/UserService - UserService
+2012-04-09 00:14:29 AuthenticatedMethodInterceptor [INFO] Method: onlyCheckSession
+2012-04-09 00:14:29 AuthenticatedMethodInterceptor [INFO] Userhash received: null
+--------------------------------
+2012-04-09 00:14:24 AuthenticatedMethodInterceptor [INFO] Session expired (not logged in server)
+2012-04-09 00:14:25 RackServletFilter [DEBUG] REQUEST: /ws/ContentService
+2012-04-09 00:14:25 LogFilter [DEBUG] REQUEST: /ws/ContentService
+2012-04-09 00:14:25 GWTServiceFilter [INFO] --------------------------------------------------------------------------------
+------------------
+2012-04-09 00:14:34 GWTServiceFilter [DEBUG] SERVICE: /ws/UserService - UserService
+2012-04-09 00:14:34 AuthenticatedMethodInterceptor [INFO] Method: onlyCheckSession
+2012-04-09 00:14:34 AuthenticatedMethodInterceptor [INFO] Userhash received: null
+2012-04-09 00:14:34 AuthenticatedMethodInterceptor [INFO] --------------------------------------------------------------------------------
+
+** Views and Subviews
+|----------+-----------------+------------------+--------------------------+----------|
+| View     | Subview         | Set              | Show                     | Hide     |
+|----------+-----------------+------------------+--------------------------+----------|
+| Folder   | Tutorial        | onToolChange     | onBtn / onEmpty & logged | closeBtn |
+|          | Empty           | onStateChange    | onEmpty                  | (1)      |
+|          | Folder list     | onStateChange    | onNotEmpty               | (1)      |
+|----------+-----------------+------------------+--------------------------+----------|
+| Content  | Tutorial        | onToolChange     | onBtn & logged           | closeBtn |
+|          | Not logged view | onStateChange    | onBtn                    | (1)      |
+|          | Def lang        | onStateChange    | onStateChange            | (1)      |
+|          | lang 1          | onBtn(LangClick) | onBtn                    | (1)      |
+|          | lang 2          | onBtn(LangClick) | onBtn                    | (1)      |
+|          | ...             |                  |                          |          |
+|----------+-----------------+------------------+--------------------------+----------|
+| Calendar | Tutorial        | onToolChange     | onBtn                    | closeBtn |
+|          | Calendar view   | onStateChange    | onBtn(calendar tool)     | (1)      |
+|----------+-----------------+------------------+--------------------------+----------|
+
+(1) when move to other #url
+
+** Permission tables
+
+|---------------------------+-------------+--------------|
+| Scopes                    | Group Space | Public Space |
+|---------------------------+-------------+--------------|
+| Admin                     | X           |              |
+| Edit                      | X           |              |
+| View                      | X           |              |
+| Published (ContentStatus) |             | X            |
+|---------------------------+-------------+--------------|
+
+|---------------+-----------------------------------------------------------|
+| GroupListMode |                                                           |
+|---------------+-----------------------------------------------------------|
+| NAME          | Description                                               |
+|---------------+-----------------------------------------------------------|
+| EVERYONE      | means that everybody is in the list                       |
+| NOBODY        | means that nobody is in the list (equals to a empty list) |
+| NORMAL        | a normal list of groups                                   |
+|---------------+-----------------------------------------------------------|
+
+AccessList samples (using GroupListMode)
+
+|---------------------------------------------------+--------+---------------+----------+---------|
+| AccessList (A: Admins, E:Editors, V: Viewers)     |        | Administrable | Editable | Visible |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:EVERYONE, E: EVERYONE, V:EVERYONE)             | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | yes           | yes      | yes     |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E: NORMAL, V:EVERYONE)         | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | no       | yes     |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E: NORMAL(Group2), V:EVERYONE) | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | yes      | yes     |
+|                                                   | Group3 | no            | no       | yes     |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E: NORMAL, V:NORMAL(Group2))   | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | no       | yes     |
+|                                                   | Group3 | no            | no       | no      |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E:NORMAL(Group2), V: NOBODY)   | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | yes      | yes     |
+|                                                   | Group3 | no            | no       | no      |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E: NOBODY, V:NORMAL(Group2))   | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | no       | yes     |
+|                                                   | Group3 | no            | no       | no      |
+|---------------------------------------------------+--------+---------------+----------+---------|
+| (A:NORMAL(Group1), E: NOBODY, V:NOBODY)           | Group1 | yes           | yes      | yes     |
+|                                                   | Group2 | no            | no       | no      |
+|                                                   | Group3 | no            | no       | no      |
+|---------------------------------------------------+--------+---------------+----------+---------|
+
+
+Groups and subgroups
+
+|------------+--------+---------+---------+-----------|
+|            | Admins | Editors | Viewers | Published |
+|------------+--------+---------+---------+-----------|
+| New doc    |        |         |         |           |
+| New folder |        |         |         |           |
+|------------+--------+---------+---------+-----------|
+
+** mvn compile fails depending of java version while compiles in eclipse:
+http://stackoverflow.com/a/2858811
+http://jenkins.361315.n4.nabble.com/jenkins-maven-build-requires-specific-jdk-1-6-version-td3931835.html
+http://maven.40175.n5.nabble.com/Freaking-out-javac-works-maven-compiler-plugin-does-not-td126247.html
+https://bugs.eclipse.org/bugs/show_bug.cgi?id=340506
+https://bugs.eclipse.org/bugs/show_bug.cgi?id=333011
+http://stackoverflow.com/questions/5633424/is-it-a-eclipse-or-maven-compiler-plugin-bug-the-generics-class-cast-issue
+https://www.google.com/search?client=ubuntu&channel=fs&q=incompatible+types++maven+compile&ie=utf-8&oe=utf-8#hl=es&client=ubuntu&channel=fs&sclient=psy-ab&q=incompatible+types++maven+compile+eclipse&oq=incompatible+types++maven+compile+eclipse&aq=f&aqi=&aql=&gs_l=serp.3...1778611l1779979l0l1780183l8l5l0l0l0l0l232l232l2-1l1l0.frgbld.&pbx=1&bav=on.2,or.r_gc.r_pw.r_cp.r_qf.,cf.osb&fp=e35c25ea2c4a1e38
+** setui/root/port 80
+   [ ] http://wiki.eclipse.org/Jetty/Howto/Port80#Configuring_Jetty.27s_SetUID_Feature
+   [ ] https://github.com/disconnect/apache-websocket
+   [ ] SSL + proxy normal
+** tutorials
+*** via btn
+*** via hash (future) #tuto(token,slide)
+*** via empty folder                                     
+** users presence vi API (for better notifications)
+http://www.igniterealtime.org/projects/openfire/plugins/presence/readme.html
+http://127.0.0.1:9090/plugins/presence/status?jid=admin@localhost&type=xml
+http://community.igniterealtime.org/thread/29064
+http://www.igniterealtime.org/builds/wildfire/docs/3.3.0_alpha_1/documentation/javadoc/org/jivesoftware/wildfire/commands/admin/GetUsersPresence.html
+** i18n usecase
+| logged | locale in URL  | i18n supported | useDB |
+| false  | false          | false          | true  |
+| false  | false          | true           | false |
+| false  | true           | false          | true  |
+| false  | true           | true           | false |
+| true   | false          | false          | true  |
+| true   | false          | true           | false |
+| true   | true (same)    | true           | false |
+| true   | true (same)    | false          | true  |
+| true   | true(*) (diff) | false          | true  |
+| true   | true(*) (diff) | true           | false |
+meta?
+
+** TODO multi uploader
+http://code.google.com/p/upload4gwt/
+http://code.google.com/p/gwt-plupload/
+http://www.plupload.com/example_all_runtimes.php
+http://gxt-multiupload-demo.appspot.com/
+http://code.google.com/p/gxt-multi-upload/
+http://code.google.com/p/gwtupload/
+** TODO improve session timeouts
+http://stackoverflow.com/questions/1406287/jspservlethow-do-i-set-session-timeout-of-greater-than-30-minutes
+** TODO workaround websocket issues
+*** compatibilities
+| jetty M2              | new wesocket | socketio  |
+| jetty M2              | x            | v         |
+| jetty M3              | x (1)        | fails     |
+| jetty 8.0.0.v20110901 | v            | fails     |
+| jetty 8.0.3.v20111011 | v            | fails (2) |
+
+  (1) HttpException(400,Unsupported draft specification: 8,null)
+  (2) Disconnected[ERROR]: XHR Connection dropped unexpectedly
+      Disconnected[TIMEOUT]: null
+2011-10-22 14:18:22,327 WARN [qtp1762721320-17] [socketio.server.DefaultSession]  - Session[tFbCSlch_gedPssWQ9TN]: Exception thrown by SocketIOInbound.onConnect()
+java.lang.NullPointerException
+	at org.eclipse.jetty.io.BufferUtil.putHexInt(BufferUtil.java:149)
+	at org.eclipse.jetty.http.HttpGenerator.prepareBuffers(HttpGenerator.java:994)
+	at org.eclipse.jetty.http.HttpGenerator.flushBuffer(HttpGenerator.java:824)
+	at org.eclipse.jetty.server.HttpConnection.flushResponse(HttpConnection.java:617)
+	at org.eclipse.jetty.server.Response.flushBuffer(Response.java:1004)
+	at com.glines.socketio.server.transport.XHRMultipartDataHandler.onWriteData(XHRMultipartDataHandler.java:94)
+
+*** proposal
+Our situation when "use_socketio = false"
+
+| Browser w/ Websocket | Client Side      | Server side         |
+| yes                  | native websocket | jetty 7.1.6 (fails) |
+| no                   | (fails)          | (fails)             |
+
+Our situation when "use_socketio = true"
+
+| Browser w/ Websocket | Client Side        | Server side            |
+| yes                  | native websocket   | jetty 7.1.6 (fails)    |
+| no                   | socket-io.js (0.6) | socket-io-java (works) |
+
+
+My proposal:
+
+| Browser w/ Websocket | Client Side        | Server side            |
+| yes                  | native websocket   | jetty 8  (works)       |
+| no                   | socket-io.js (0.6) | socket-io-java (works) |
+*** client side
+public interface WaveSocket {
+  interface WaveSocketCallback {
+    void onConnect();
+    void onDisconnect();
+    void onMessage(String message);
+  }
+
+  void connect();
+  void disconnect();
+  void sendMessage(String message);
+}
+*** server side (see SocketIOServlet.java)
+
+** TODO Lists tool
+*** title
+*** description!
+*** type
+**** Public
+***** Anyone can read the archives. Anyone can join, but only members can post
+***** In Kune: Viewers: all, Editors: Group members, Admins: Group members
+**** Announcement-only
+***** Anyone can read the archives. Anyone can join, but only managers can post messages.
+***** In Kune: View: all, Editors: view, Admins: r/w
+**** Restricted
+***** People must be invited to join the group and post or read messages. Your group and its archives do not appear in public Google search results or the directory.
+***** In Kune: no
+** TODO >> Delete host/room conf in ws.html
+** TODO HelloWorld with samples of extensions: sitebar, sitebar options menu, siteuseroptions, sn, ...
+** WIAB under proxies
+https://groups.google.com/group/wave-protocol/browse_thread/thread/202dee4bfdbdeee6
+** TODO StateManager #signin while already signed in NPE
+** TODO Testing Presenters via juckito:
+https://code.google.com/p/gwt-platform/wiki/UnitTesting
+https://code.google.com/p/arcbees-hive/source/browse/test/com/arcbees/hive/client/home/blog/ui/BlogItemWidgetTest.java
+** Use Emulate Stack Java like src/org/waveprotocol/box/webclient/WebClientDev.gwt.xml
+** roo error
+[FelixDispatchQueue] Expected string-based content in @RooGwtMirroredFrom on cc.kune.client.managed.request.ContainerTranslationProxyObject of class [org.springframework.roo.classpath.details.annotations.ClassAttributeValue] must be an instance of class org.springframework.roo.classpath.details.annotations.StringAttributeValue
+** Gin sharing of instances between injectors
+https://groups.google.com/group/google-gin/browse_thread/thread/203ab1725406bd44/209429fd95366182?lnk=gst&q=multiple+module#209429fd95366182
+** Wave integration
+   [ ] org.waveprotocol.box.webclient.WebClientProd
+   [ ] src/org/waveprotocol/box/server/ServerMain.java
+   [ ] pom.xml dep references
+** Update Dev Guide
+*** mvn compile && mvn gwt:compile
+*** hosted mode, whe war selection target/kune-VERSION
+*** Increase open files limit
+/etc/security/limits.conf
+#I adjusted this so kune will work with more java files
+ *       soft    nofile          2048
+ *       hard    nofile          4096
+More info
+http://www.thinkplexx.com/learn/howto/maven2/debug/fixing-too-many-open-files-maven-problem-solution-for-teamcity-hudson-local-and-ssh-shell-environments
+*** GWT Hosted mode
+**** From eclipse
+***** Better without server, with: --noserve -port 8080
+***** Hosted mode with server (many memory)
+**** Install GWT extension/plugin http://gwt.google.com/missing-plugin/MissingPlugin.html
+*** Compilation ?
+    When compiling from eclipse, select target/kune-VERSION/ as War directory
+*** Run before gwt:compile and mvn package (copy webResources)
+*** Annotations generation http://code.google.com/p/gwt-platform/wiki/BoilerplateGeneration#Eclipse
+*** Add -startupUrl to your GWT Run launch with /ws/?locale=en&log_level=INFO (or similar)
+*** When you compile/run gwt web-app from eclipse, select target/kune-CURRENT-VERSION as War directory selection
+*** src/main/webapp in GWTDesigner???
+** Documentation
+   CLOSED: [2012-03-04 dom 22:51] 
+*** Windows users
+http://dev.mysql.com/downloads/mysql/
+http://dev.mysql.com/downloads/gui-tools/5.0.html (recomended)
+*** Debug: client / server (see launch confs)
+*** Hosted Mode support for websocket
+**** Test that websocket is supported in your GWT Hosted Mode browser:
+http://www.websockets.org/
+http://jimbergman.net/websocket-web-browser-test/
+**** if not:
+***** Install newest firefox (for hosted-mode and websocket support)
+add-apt-repository ppa:ubuntu-mozilla-daily/ppa
+apt-get update
+
+** tags system, resolve last implementation complexity.
+Summary: recover the:
+[Tag]  <-m--m->  [Content]
+and use:
+[Tag]  <-1--m->   [TagUserContent (fecha)]  <-m--1->  [Content]
+[User] <-1-------m--^
+for user bookmarks/favorites/links
+** Do something with jetty/jruby alias issue
+   http://jetty.mortbay.org/jetty5/faq/faq_s_400-Security_t_Aliases.html
+** New Action (Command) class
+*** Things to support
+- [X] menu and toolbars separators (space, bar, expand)
+- [X] index position insertion (for buttons added by other plugins)
+- [X] menu button property change (icon, text). If we select a menu option, maybe this require a change in the menu button.
+- [X] confirmation of actions yes, no.... (confirmation title, text, and onNotConfirmed)
+- [X] tongle/push buttons with isPressed (initially and later)...
+- [X] position id, that is, if we have some toolbars and a list of actions, how to select which action in which toolbar.
+- [X] radio menu (with group) and check menu item
+- [ ] you can set a property in a action and change it in the gui without change the action
+- [ ] actions/descriptors can be reused
+- [ ] shortcuts
+- [ ] Presenter/View separation
+- [ ] Injection
+- [ ] Many items of some action/description
+- [ ] a better binding 
+https://code.google.com/p/gwt-beans-binding/
+https://code.google.com/p/gwt-beans-binding/wiki/MoreIntroduction
+*** Descripción:
+Tengo una acción que se asocia a una descripción de UI y que esta se puede traducir a un tipo de Wigdet
+
+acción <1---m>descrip<1---m>widgets
+
+avatar (des) ------------> Widget
+  lazy-menu (des) -------> Widget
+    lazy-submenu (des)---> Widget
+      lazy-item (des) ---> Widget
+         action (act)
+
+lista de (des) ---> lista de views
+** TODO <v> User preferences storing
+*** links:
+**** http://download.oracle.com/javase/1.4.2/docs/guide/lang/preferences.html (Preferences API)
+**** http://stackoverflow.com/questions/6050397/hibernate-mapping-optional-value
+**** http://stackoverflow.com/questions/3100881/user-preferences-file-vs-app-preferences-file
+**** http://stackoverflow.com/questions/1079711/best-approach-to-save-user-preferences
+**** http://stackoverflow.com/questions/3109550/user-preferences-in-jee-application
+**** http://stackoverflow.com/questions/598877/user-preferences-database-table-design
+
+*** old work
+   (See also variables in 'Styling braimstorming')
+   We need a way to store (in db) User preferences (like emite chat configurations) in a extensible way.
+   Something similar to java.util.prefs.Preferences or Mozilla about:config
+   http://java.sun.com/developer/technicalArticles/releases/preferences/
+   "Because the Preferences API is back-end neutral, you need not care whether the data are stored in files, database tables, or a platform-specific storage such as the Windows Registry. In fact, you don't want to care, because the situation may differ across varying platforms, or even across implementations on the same platform."
+   More links:
+   http://stackoverflow.com/questions/194349/what-is-the-proper-way-to-store-apps-conf-data-in-java
+
+   Property
+      name
+      PropertyGroup pGroup
+      PropertySubgroup sGroup
+
+   PropertyGroup implements HasId
+      String name
+
+   PropertySubGroup implements HasId
+      String name
+
+   PropertySetted extends Property
+      String value
+
+   Properties
+      List<PropertySetted> list
+
+   User
+      Properties
+
+   Group
+      Properties 
+** vjrj Styling braimstorming
+*** layouts
+    - name :: greenforrest
+    - screenshot :: images/greenforrest.png
+    - varsgroupname :: layout.greenforrest
+*** html+css+variables
+**** css:
+**** variables
+     prefgroups
+     - id :: 1
+     - groupname :: emite.ui
+
+     pref
+     - id :: 1
+     - group :: 1
+     - name :: usercolor
+     - description :: (optional) The color of the self alias color in chat conversations
+     - vartype :: (int/boolean/String) red
+     - defvalue :: ?? #000000
+
+     userpref
+     - id :: 1
+     - userid :: 123
+     - varid :: 1
+     - group :: 1
+     - name :: usercolor
+     - status :: (setted|def) setted
+     - value :: red
+**** links
+http://lesscss.org/
+http://xcss.antpaw.org/ https://code.google.com/p/xcssframework/
+*** logos
+*** caching
+*** backgrounds
+    A big one select from context
+    body {
+    background: #352726 url('http://some.jpg') fixed no-repeat top left;
+    }
+
+** danigb,vjrj URLs public/workspace braimstorming
+   Read this ->  http://googlewebmastercentral.blogspot.com/2009/10/proposal-for-making-ajax-crawlable.html
+http://stackoverflow.com/questions/2430244/making-gwt-application-crawlable-by-a-search-engine
+   Nowadays:
+   - ws: #group.tool.container.content
+   - public (prov): /public/group.tool.container.content.
+     We are looking to: http://group.kunedomain/p/tool.container.content/
+   The problem: When an agent (such as a Web browser) requests a resource from a Web server, the agent sends the URI to the server, but does not send the #fragment.
+   This is good for gwt (history support), but if we use the same url #a.b.c.d in public these links don't work.
+   Posible solutions:
+   1) use also of #a.b.c.d in public and do a gwt small module to make a redirect in the client to /public/
+      Problem: this kind of links are not followed by spiders.
+   2) replace #a.b.c.d with /p/a.b.c.d before show in public
+      Problem: parse/replace/cache every doc showed in public
+   Other problems:
+   - how to support #fragments different than #a.b.c.d in contents in ws
+     Solution: Maybe use <div id> and ensure visible that id
+   - how to point to some content comment, or to some revision (for example)
+     examples: #a.b.c.d-c4 for a comment of #a.b.c.d-r2 for a rev.
+     Solution: to extend StateToken
+   - Readable URLs
+     Posible solution: use #a.b.c.d-ln-some-readable-title /p/a.b.c.d-ln-some-readable-title and parse only a.b.c.d
+     This can be abused if we don't check and store the readable title: #a.b.c.d-some-nasty-text
+   Some links:
+   http://code.google.com/p/google-web-toolkit-doc-1-5/wiki/DevGuideHistory
+   http://en.wikipedia.org/wiki/Fragment_identifier
+   http://www.w3.org/DesignIssues/Fragment.html
+   Some related: https://code.google.com/p/restful-gwt/
+** vjrj <v> rails group-shortname.kune-site-domain/tool-name/folder-id/doc-id routing, maybe use:
+   http://agilewebdevelopment.com/plugins/request_routing
+   http://wiki.rubyonrails.org/rails/pages/Request+Routing
+   http://svn.danwebb.net/external/rails/plugins/request_routing/trunk/README
+** vjrj <v> Duplicate Keys in group/user creation different exception
+   2007-12-21 10:35:16,193 [btpool0-5] ERROR - Duplicate entry 'vjrj' for key 3
+   2007-12-21 10:35:16,195 [btpool0-5] DEBUG - ContentManagerDefault.persist EXCEPTION => javax.persistence.EntityExistsException: org.hibernate.exception.ConstraintViolationException: could not insert: [org.ourproject.kune.platf.server.domain.Group]
+   2007-12-21 10:35:16,196 [btpool0-5] DEBUG - ContentManagerDefault.persist EXCEPTION => javax.persistence.EntityExistsException: org.hibernate.exception.ConstraintViolationException: could not insert: [org.ourproject.kune.platf.server.domain.Group]
+   2007-12-21 10:35:16,197 [btpool0-5] DEBUG - ContentManagerDefault.createContent EXCEPTION => javax.persistence.Entity
+** vjrj <v> IconHyperlink.java and IconLabel.java to gwt1.5
+   
+** chromium & selenium
+http://www.chromium.org/developers/testing/webdriver-for-chrome
+/usr/bin/chromiumdriver 
+chmod og+rx /usr/bin/chromiumdriver
+
+** Memory use in demo
+http://rimuhosting.com/howto/memory.jsp
+Resolving: High Java Memory Usage
+
+Java processes can often consume more memory than any other application running on a server.
+
+Java processes can be passed a -Xmx option.  This controls the maximum Java memory heap size.  It is important to set a limit on the heap size, otherwise the heap will keep increasing until you get out of memory errors on your VPS (resulting in the Java process - or even some other, random, process - dying.
+
+Usually the setting can be found in your /usr/local/jboss/bin/run.conf or /usr/local/tomcat/bin/setenv.sh config files.  And your RimuHosting default install should have a reasonable value in there already.
+
+If you are running a custom Java application, check there is a -XmxNNm (where NN is a number of megabytes) option on the Java command line.
+
+The optimal -Xmx setting value will depend on what you are running.  And how much memory is available on your server.
+
+From experience we have found that Tomcat often runs well with an -Xmx between 48m and 64m.  JBoss will need a -Xmx of at least 96m to 128m.  You can set the value higher.  However, you should ensure that there is memory available on your server.
+
+To determine how much memory you can spare for Java, try this: stop your Java process; run free -m; subtract the 'used' value from the "-/+ cache" row from the total memory allocated to your server and then subtract another 'just in case' margin of about 10% of your total server memory.  The number you come up with is a rough indicator of the largest -Xmx setting you can use on your server.
+* MID-TERM
+** apt repo signed for kune packages
+https://www.google.es/search?client=ubuntu&channel=fs&q=repository+own+debian+gpg&ie=utf-8&oe=utf-8&redir_esc=&ei=rMxPUKPtJJSFhQeCq4DwAQ
+http://wiki.debian.org/SettingUpSignedAptRepositoryWithReprepro
+** hotdeploy hot swapping:
+http://ssw.jku.at/dcevm/
+https://community.jboss.org/wiki/CurrentStateOfHotDeploymentInJava?_sscc=t
+http://www.devdaily.com/java/jwarehouse/jetty-6.1.9/modules/jetty/src/main/java/org/mortbay/jetty/deployer/ContextDeployer.java.shtml
+http://www.bonitasoft.org/blog/tutorial/programmatic-hot-deploy-with-jetty/
+** Try to reuse welcome message to anonymous users in GWave:
+Welcome to Google Wave
+
+You are looking at a wave that someone thought you'd be interested in. Google Wave helps you communicate and work together with richly formatted text, photos, videos and more. It lets you all stay on the same page.
+Quick tips
+
+    Move to the next unread blip. Try spacebar. 
+    Edit any blip in the wave.Try ctrl-e. 
+    Reply to any blip. Try shift-enter or double click text. 
+    Reply to any blip. Hover over the bottom of a blip and click the blue bar. 
+    Add someone else to this wave, using an email address or their Wave address. 
+
+Sign in to Google Wave
+** Study mozilla web apps:
+https://apps.mozillalabs.com/
+** Menubar submenus problem
+https://groups.google.com/group/google-web-toolkit/browse_thread/thread/aa887d470ed609c/c76d622622e39a56?lnk=gst&q=menubar+left+#c76d622622e39a56
+** Template system for new waves with legal free/open procedures
+New
+ Templates
+  In English
+  In Spanish
+    Legal
+      Procedimiento A
+      Procedimiento B
+      Borrador de Estutos de Asociación
+      (...)
+
+** Archive of xmpp conversations
+*** http://community.igniterealtime.org/docs/DOC-1094 (for openfire)
+** Enable two Waves per doc: 1 for the doc (no comments enabled), other for comments. Similar to docs.google.com comments approach.
+** TODO start/stop init scripts
+https://groups.google.com/group/wave-protocol/browse_thread/thread/d9cdcea0d5393eda
+./platforms/ubuntu/server-wrapper.sh
+** TODO registration/general mask
+** TODO sigin forms to uibinder (intro sing-in) 
+** TODO Use google-guice guicepersist (in 3.0) instead of warp-persist
+** TODO See GWT+RPC with Guice:
+http://stuffthathappens.com/blog/2009/09/14/guice-with-gwt/
+http://pavelgj.blogspot.com/2008/02/gwt-remoteserviceservlet-guice.html
+** TODO junit + guice utils:
+https://code.google.com/p/jukito/
+https://code.google.com/p/guiceberry/
+https://code.google.com/p/atunit/
+** TODO Study OSGI + guice:
+https://code.google.com/p/peaberry/
+** Use hibernate cache
+   http://ehcache.sourceforge.net/documentation/openjpa_provider.html
+   http://ehcache.sourceforge.net/documentation/hibernate.html
+** TODO <v> Images zoom-in/out with style="cursor: url(somezoomcursor.cur);"
+http://www.w3.org/TR/SVG/interact.html#Cursors
+http://www.w3.org/TR/CSS2/ui.html
+** TODO <v> karma, reputation, trust metrics:
+http://wiki.couchsurfing.com/en/Trust
+http://p2pfoundation.net/Trust_Metrics
+http://en.wikipedia.org/wiki/Trust_metric
+http://www.advogato.org/trust-metric.html
+** TODO <v> use guice 2.0
+   http://google-code-updates.blogspot.com/2009/05/guice-deuce.html
+   http://code.google.com/docreader/#p=google-guice&s=google-guice
+   http://groups.google.com/group/warp-core
+   when warp-persist also support it
+** TODO <v> encourage use of free formats
+** TODO <v> study opensocial, openstack and related
+   http://developer.yahoo.net/blog/archives/2008/12/the_open_stack.html
+** TODO <v> Use of command key ⌘ for Mac shortcuts
+** TODO <s> Find the way to use: "NOYB: Privacy in online social networks"
+   http://www.citeulike.org/user/dartar/article/4252739
+** TODO <v,s> harden our privacy policy. Goals:
+   - permit user/projects/contents how much private or public are
+   - APIs public only to associated sites (in study) ( http://oauth.net ? )
+http://raibledesigns.com/rd/entry/implementing_oauth_with_gwt
+   - the social net info (xmpp ids) must follow the mobile numbers/email info interchange mode (if I don't have yor email/mobile, I can't contact you)
+   - keep always the user informed
+   - consider integration of chryptopgraphy (keyczar.org ? )
+   - encourage the use of nicknames; discourage the use of real names (as in Facebook). If a political group uses real names, an undercover would have too much info
+     - take into account the rms recommendations about privacy...
+** <v> trash icon area d&d
+** vjrj <v> shortcuts enhacement
+*** Clarify the keycodes vs utf8 chars Shortcut definition (Function keys and so on...)
+*** shortcuts in tool actions no registered in GlobalShorcuts
+*** Links:
+    http://www.quirksmode.org/js/keys.html
+    http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx
+** TODO <s> tag UI refactorization
+   Think about wikipedia suggestions:
+   http://www.mediawiki.org/wiki/API
+** <s,v> Integrate recommendations/suggestions subsystem
+*** Samer suggests to implement a CBR system for suggests :)
+    http://en.wikipedia.org/wiki/Case-based_reasoning
+    linked with
+    http://www.mediawiki.org/wiki/API
+*** links
+    http://taste.sourceforge.net/
+** <s> Bastien's extension to emite, for assemblies:
+Possible extension of the Chat utility: make it a tool to take notes
+during a meeting.   Something where someone can define topics, where
+the logs can be exported in .odt (with user-defined sequences, maybe
+corresponding to the topics...) -- I don't have a precise idea of what
+I am talking about, but I'm sure there is something to do.
+** vjrj <v> Login: Follow incubation recomendations. See:
+   http://groups.google.com/group/Google-Web-Toolkit/browse_thread/thread/e8e14b16e57b266f
+   Also autocomplete user/passwordi (for browser store):
+   http://groups.google.fr/group/Google-Web-Toolkit/browse_thread/thread/2b2ce0b6aaa82461
+*** steps
+**** create user kune
+**** create /var/lib/kune/uploads and give permissions
+**** create /var/lib/kune/lucene
+**** deps: libjmagick6-jni, csstidy
+**** cp -a $EXTSRC/source/locale/ src/main/java/org/ourproject/kune/app/public/js/ext/source/
+** <v> implement pubsub in emite
+   http://xmpp.org/extensions/attic/jep-0060-1.6.html
+   see:  svn checkout svn://anonsvn.it.su.se/su-smack su-smack
+** TODO <v> study different embeded video solutions
+   - for ogg :: http://www.flumotion.net/cortado/
+   http://www.flumotion.net/cortado/
+   https://code.fluendo.com/flumotion/trac/browser/cortado/trunk/README
+   http://en.flossmanuals.net/TheoraCookbook/Cortado
+   - for mp3+flv :: flowplayer
+   http://flv-player.net/
+   - for avi :: some links:
+   http://www.w3schools.com/media/media_browservideos.asp   
+   http://www.solitude.dk/archives/embedquicktime/
+   http://www.solitude.dk/archives/embedquicktime/jquery.embedquicktime-source.js
+** TODO <d> Inform to translators when original content changes
+** TODO <v> Restarting server don't affect client session
+   Now there are problems if client was started before server, when server restart (session persist)
+** TODO <v> Interceptors also useful for translation of db fields
+** vjrj <d> click in new group, reload sn innecessary
+** TODO <v> Injection problem
+2008-01-03 23:17:57.575::WARN:  failed rack
+java.lang.RuntimeException: java.lang.RuntimeException: Please apply com.google.inject.servlet.GuiceFilter to any request which uses servlet scopes.
+        at org.ourproject.kune.platf.server.KunePersistenceService.start(KunePersistenceService.java:41)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1.CGLIB$start$0(<generated>)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1$$FastClassByGuice$$ad60fdce.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1.start(<generated>)
+        at org.ourproject.kune.app.server.KuneContainerListener.start(KuneContainerListener.java:57)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e.CGLIB$start$0(<generated>)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e$$FastClassByGuice$$7d4658ed.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e.start(<generated>)
+        at org.ourproject.kune.rack.RackServletFilter.startContainerListeners(RackServletFilter.java:102)
+        at org.ourproject.kune.rack.RackServletFilter.init(RackServletFilter.java:90)
+        at org.mortbay.jetty.servlet.FilterHolder.doStart(FilterHolder.java:99)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.servlet.ServletHandler.initialize(ServletHandler.java:589)
+        at org.mortbay.jetty.servlet.Context.startContext(Context.java:139)
+        at org.mortbay.jetty.webapp.WebAppContext.startContext(WebAppContext.java:1218)
+        at org.mortbay.jetty.handler.ContextHandler.doStart(ContextHandler.java:500)
+        at org.mortbay.jetty.webapp.WebAppContext.doStart(WebAppContext.java:448)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerCollection.doStart(HandlerCollection.java:147)
+        at org.mortbay.jetty.handler.ContextHandlerCollection.doStart(ContextHandlerCollection.java:161)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerCollection.doStart(HandlerCollection.java:147)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerWrapper.doStart(HandlerWrapper.java:117)
+        at org.mortbay.jetty.Server.doStart(Server.java:217)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.plugin.Jetty6PluginServer.start(Jetty6PluginServer.java:132)
+        at org.mortbay.jetty.plugin.AbstractJettyMojo.startJetty(AbstractJettyMojo.java:345)
+        at org.mortbay.jetty.plugin.AbstractJettyMojo.execute(AbstractJettyMojo.java:286)
+        at org.mortbay.jetty.plugin.AbstractJettyRunMojo.execute(AbstractJettyRunMojo.java:204)
+        at org.mortbay.jetty.plugin.Jetty6RunMojo.execute(Jetty6RunMojo.java:183)
+        at org.apache.maven.plugin.DefaultPluginManager.executeMojo(DefaultPluginManager.java:443)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoals(DefaultLifecycleExecutor.java:539)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeStandaloneGoal(DefaultLifecycleExecutor.java:493)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoal(DefaultLifecycleExecutor.java:463)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoalAndHandleFailures(DefaultLifecycleExecutor.java:311)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeTaskSegments(DefaultLifecycleExecutor.java:278)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.execute(DefaultLifecycleExecutor.java:143)
+        at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:334)
+        at org.apache.maven.DefaultMaven.execute(DefaultMaven.java:125)
+        at org.apache.maven.cli.MavenCli.main(MavenCli.java:272)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:64)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:615)
+        at org.codehaus.classworlds.Launcher.launchEnhanced(Launcher.java:315)
+        at org.codehaus.classworlds.Launcher.launch(Launcher.java:255)
+        at org.codehaus.classworlds.Launcher.mainWithExitCode(Launcher.java:430)
+        at org.codehaus.classworlds.Launcher.main(Launcher.java:375)
+Caused by: java.lang.RuntimeException: Please apply com.google.inject.servlet.GuiceFilter to any request which uses servlet scopes.
+        at com.google.inject.servlet.GuiceFilter.getContext(GuiceFilter.java:63)
+        at com.google.inject.servlet.GuiceFilter.getRequest(GuiceFilter.java:53)
+        at com.google.inject.servlet.ServletScopes$2$1.get(ServletScopes.java:70)
+        at com.google.inject.InternalFactoryToProviderAdapter.get(InternalFactoryToProviderAdapter.java:41)
+        at com.google.inject.InjectorImpl$9$1.call(InjectorImpl.java:708)
+        at com.google.inject.InjectorImpl.callInContext(InjectorImpl.java:747)
+        at com.google.inject.InjectorImpl$9.get(InjectorImpl.java:702)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault.t(I18nTranslationServiceDefault.java:39)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041.CGLIB$t$0(<generated>)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041$$FastClassByGuice$$11ec050b.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041.t(<generated>)
+        at org.ourproject.kune.docs.server.DocumentServerTool.initGroup(DocumentServerTool.java:81)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4.CGLIB$initGroup$4(<generated>)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4$$FastClassByGuice$$a9c1177c.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4.initGroup(<generated>)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault.initGroup(GroupManagerDefault.java:194)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault.createUserGroup(GroupManagerDefault.java:114)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be.CGLIB$createUserGroup$4(<generated>)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be$$FastClassByGuice$$63ba8c7d.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be.createUserGroup(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.createDefUsersGroup(DatabaseInitializer.java:108)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.initDatabase(DatabaseInitializer.java:83)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.CGLIB$initDatabase$1(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057$$FastClassByGuice$$8f733e39.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.wideplay.warp.jpa.JpaLocalTxnInterceptor.invoke(JpaLocalTxnInterceptor.java:29)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.initDatabase(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.initConditional(DatabaseInitializer.java:75)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.CGLIB$initConditional$0(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057$$FastClassByGuice$$8f733e39.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.initConditional(<generated>)
+        at org.ourproject.kune.platf.server.KunePersistenceService.start(KunePersistenceService.java:39)
+        ... 58 more
+2008-01-03 23:17:57.617::WARN:  Failed startup of context org.mortbay.jetty.webapp.WebAppContext@746e746e{/,/home/vjrj/proyectos/ourproject.org/kune/svn/trunk/src/main/webapp}
+java.lang.RuntimeException: java.lang.RuntimeException: Please apply com.google.inject.servlet.GuiceFilter to any request which uses servlet scopes.
+        at org.ourproject.kune.platf.server.KunePersistenceService.start(KunePersistenceService.java:41)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1.CGLIB$start$0(<generated>)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1$$FastClassByGuice$$ad60fdce.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.KunePersistenceService$$EnhancerByGuice$$5d1347d1.start(<generated>)
+        at org.ourproject.kune.app.server.KuneContainerListener.start(KuneContainerListener.java:57)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e.CGLIB$start$0(<generated>)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e$$FastClassByGuice$$7d4658ed.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.app.server.KuneContainerListener$$EnhancerByGuice$$d39ac79e.start(<generated>)
+        at org.ourproject.kune.rack.RackServletFilter.startContainerListeners(RackServletFilter.java:102)
+        at org.ourproject.kune.rack.RackServletFilter.init(RackServletFilter.java:90)
+        at org.mortbay.jetty.servlet.FilterHolder.doStart(FilterHolder.java:99)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.servlet.ServletHandler.initialize(ServletHandler.java:589)
+        at org.mortbay.jetty.servlet.Context.startContext(Context.java:139)
+        at org.mortbay.jetty.webapp.WebAppContext.startContext(WebAppContext.java:1218)
+        at org.mortbay.jetty.handler.ContextHandler.doStart(ContextHandler.java:500)
+        at org.mortbay.jetty.webapp.WebAppContext.doStart(WebAppContext.java:448)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerCollection.doStart(HandlerCollection.java:147)
+        at org.mortbay.jetty.handler.ContextHandlerCollection.doStart(ContextHandlerCollection.java:161)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerCollection.doStart(HandlerCollection.java:147)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.handler.HandlerWrapper.doStart(HandlerWrapper.java:117)
+        at org.mortbay.jetty.Server.doStart(Server.java:217)
+        at org.mortbay.component.AbstractLifeCycle.start(AbstractLifeCycle.java:40)
+        at org.mortbay.jetty.plugin.Jetty6PluginServer.start(Jetty6PluginServer.java:132)
+        at org.mortbay.jetty.plugin.AbstractJettyMojo.startJetty(AbstractJettyMojo.java:345)
+        at org.mortbay.jetty.plugin.AbstractJettyMojo.execute(AbstractJettyMojo.java:286)
+        at org.mortbay.jetty.plugin.AbstractJettyRunMojo.execute(AbstractJettyRunMojo.java:204)
+        at org.mortbay.jetty.plugin.Jetty6RunMojo.execute(Jetty6RunMojo.java:183)
+        at org.apache.maven.plugin.DefaultPluginManager.executeMojo(DefaultPluginManager.java:443)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoals(DefaultLifecycleExecutor.java:539)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeStandaloneGoal(DefaultLifecycleExecutor.java:493)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoal(DefaultLifecycleExecutor.java:463)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeGoalAndHandleFailures(DefaultLifecycleExecutor.java:311)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.executeTaskSegments(DefaultLifecycleExecutor.java:278)
+        at org.apache.maven.lifecycle.DefaultLifecycleExecutor.execute(DefaultLifecycleExecutor.java:143)
+        at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:334)
+        at org.apache.maven.DefaultMaven.execute(DefaultMaven.java:125)
+        at org.apache.maven.cli.MavenCli.main(MavenCli.java:272)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:64)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:615)
+        at org.codehaus.classworlds.Launcher.launchEnhanced(Launcher.java:315)
+        at org.codehaus.classworlds.Launcher.launch(Launcher.java:255)
+        at org.codehaus.classworlds.Launcher.mainWithExitCode(Launcher.java:430)
+        at org.codehaus.classworlds.Launcher.main(Launcher.java:375)
+Caused by: java.lang.RuntimeException: Please apply com.google.inject.servlet.GuiceFilter to any request which uses servlet scopes.
+        at com.google.inject.servlet.GuiceFilter.getContext(GuiceFilter.java:63)
+        at com.google.inject.servlet.GuiceFilter.getRequest(GuiceFilter.java:53)
+        at com.google.inject.servlet.ServletScopes$2$1.get(ServletScopes.java:70)
+        at com.google.inject.InternalFactoryToProviderAdapter.get(InternalFactoryToProviderAdapter.java:41)
+        at com.google.inject.InjectorImpl$9$1.call(InjectorImpl.java:708)
+        at com.google.inject.InjectorImpl.callInContext(InjectorImpl.java:747)
+        at com.google.inject.InjectorImpl$9.get(InjectorImpl.java:702)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault.t(I18nTranslationServiceDefault.java:39)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041.CGLIB$t$0(<generated>)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041$$FastClassByGuice$$11ec050b.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.i18n.I18nTranslationServiceDefault$$EnhancerByGuice$$e355e041.t(<generated>)
+        at org.ourproject.kune.docs.server.DocumentServerTool.initGroup(DocumentServerTool.java:81)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4.CGLIB$initGroup$4(<generated>)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4$$FastClassByGuice$$a9c1177c.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.docs.server.DocumentServerTool$$EnhancerByGuice$$a36c3df4.initGroup(<generated>)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault.initGroup(GroupManagerDefault.java:194)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault.createUserGroup(GroupManagerDefault.java:114)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be.CGLIB$createUserGroup$4(<generated>)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be$$FastClassByGuice$$63ba8c7d.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.manager.impl.GroupManagerDefault$$EnhancerByGuice$$984cc1be.createUserGroup(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.createDefUsersGroup(DatabaseInitializer.java:108)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.initDatabase(DatabaseInitializer.java:83)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.CGLIB$initDatabase$1(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057$$FastClassByGuice$$8f733e39.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.wideplay.warp.jpa.JpaLocalTxnInterceptor.invoke(JpaLocalTxnInterceptor.java:29)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.initDatabase(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer.initConditional(DatabaseInitializer.java:75)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.CGLIB$initConditional$0(<generated>)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057$$FastClassByGuice$$8f733e39.invoke(<generated>)
+        at com.google.inject.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:187)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at org.ourproject.kune.platf.server.LoggerMethodInterceptor.invoke(LoggerMethodInterceptor.java:44)
+        at com.google.inject.InterceptorStackCallback$InterceptedMethodInvocation.proceed(InterceptorStackCallback.java:66)
+        at com.google.inject.InterceptorStackCallback.intercept(InterceptorStackCallback.java:45)
+        at org.ourproject.kune.platf.server.init.DatabaseInitializer$$EnhancerByGuice$$314ec057.initConditional(<generated>)
+        at org.ourproject.kune.platf.server.KunePersistenceService.start(KunePersistenceService.java:39)
+        ... 58 more
+2008-01-03 23:17:57.697::INFO:  Started SelectChannelConnector@0.0.0.0:8080
+** TODO <v> RTL (BiDi support). The problem will be extjs (gwt support bidi in 1.5):
+   http://extjs.com/forum/showthread.php?t=9659
+   http://cssjanus.commoner.com/
+** TODO <v> Study the possibility to include in SN something similar to "Member since <date>".
+** TODO <v> think about more secure login, SRP protocol thread, and:
+http://groups.google.com/group/Google-Web-Toolkit/browse_thread/thread/97623347b448e16e
+http://groups.google.com/group/Google-Web-Toolkit/browse_thread/thread/367bdb56dd4e5ad1
+*** oauth
+    http://code.google.com/p/gwt-examples/wiki/oAuth
+*** other links
+    http://code.google.com/p/gwt-examples/wiki/project_LoginManager
+    http://code.google.com/p/google-web-toolkit-incubator/wiki/LoginSecurityFAQ
+** TODO <v> Build better our maven repo
+  http://maven.apache.org/guides/mini/guide-central-repository-upload.html
+** TODO <v> for dev, study jetty hot deploy (manual mode in >=7.0.0).
+** TODO <v> Use of maven-exec plugin to exec scripts (to css tidy, etcetera)
+  http://mojo.codehaus.org/exec-maven-plugin/introduction.html
+** TODO <v> Strip html better in RTE, I18nTranslator, Chat
+   http://groups.google.com/group/Google-Web-Toolkit/browse_thread/thread/b4a27c80f50581cc
+** TODO <v> See css utilities in http://code.google.com/p/cobogw/
+** TODO <v> kune & accessibility
+   ARIA specification
+   http://code.google.com/docreader/#p=google-web-toolkit-doc-1-5&s=google-web-toolkit-doc-1-5&t=DevGuideAccessibility
+   http://code.google.com/docreader/#p=google-web-toolkit-doc-1-5&s=google-web-toolkit-doc-1-5&t=DevGuideAccessibilityHOWTO
+   http://googlewebtoolkit.blogspot.com/2008/09/built-in-accessibility-in-gwt-15.html
+   http://extjs.com/forum/showthread.php?t=12999
+** FIXED <s,v> Add in license choose a free/non-free indicator [3]
+** FIXED <v> browser font size (different from default) issues (scroll in dialogs, buttons background, etc)
+   CLOSED: [2009-01-03 sáb 01:37]
+
+** <v> P2P downloads for bigg uploads (the server acts as seeder).
+** TODO <s> Include CC0 license:
+   http://creativecommons.org/license/zero/
+** TODO <v> Revise use the HP and VP in gwt code
+   http://groups.google.com/group/Google-Web-Toolkit/browse_frm/thread/5d01cd806d93b94e/2909d30d1b2ddfb7?lnk=gst&q=GWT+%2B+FlowPanel+%2B+CSS+#2909d30d1b2ddfb7
+** TODO <v> captcha in anonymous comments/edits
+   http://groups.google.com/group/Google-Web-Toolkit/browse_thread/thread/99c259aad06406c6?pli=1
+** TODO <v> Study P2P integration
+   Study of P2P usage:
+   http://torrentfreak.com/p2p-traffic-still-booming-071128/
+*** torrent
+    http://en.wikipedia.org/wiki/Torrent_tracker
+    BT FAQ:
+    http://www.dessent.net/btfaq/
+    mod_bt:
+    http://www.crackerjack.net/mod_bt/mod_bt.html
+    apt-cache show libapache2-mod-bt
+    http://mail.milwaukeelug.org/wws/arc/mlug-list/2007-10/msg00119.html
+
+    http://hightechsorcery.com/2008/02/bittorrent-tracker-debian-and-ubuntu
+    http://erdgeist.org/arts/software/opentracker/
+    http://torrentfreak.com/the-pirate-bay-switches-to-opentracker-071208/
+* LONG-TERM
+** <s> About mailman usability and integration
+(sorry some comments in Spanish)
+muy poca chicha:
+2007: http://mail.python.org/pipermail/mailman-users/2007-February/055752.html
+solo un mensaje mmmm sin respuesta:
+2009: http://forum.joomla.org/viewtopic.php?f=471&t=400655&start=0
+tampoco me parece muy allá
+2008: http://markmail.org/message/l4pwznsl6aflth2s
+poca cosa:
+2008: http://markmail.org/message/fbp25rl4v2guak7w?q=mailman+%22google+groups%22#query:mailman%20%22google%20groups%22+page:1+mid:atqbl34zebq2d37u+state:results
+http://wiki.list.org/pages/viewpage.action?pageId=4030527
+Más, interesante para nosotros:
+http://groups.google.com/group/google-appengine/browse_thread/thread/a3ccf221c6f99bcf?pli=1
+http://uphpu.org/pipermail/uphpu/2007-August/007858.html
+Tb es un detalle gracioso que al ir a http://en.wikipedia.org/wiki/Electronic_mailing_list se linkan tanto Mailman como MSN/Yahoo/Google Groups, claro... cualquiera puede ir, ver la más cómoda, y usarla :P
+** <s> integrate some blog/wiki converter:
+   http://code.google.com/p/google-blog-converters-appengine/
+   http://toolserver.org/~merphant/wiki2html/
+* IDEAS
+** <d> Try to find a way dozer maps directly without use getters/setters (less js code and better performance)
